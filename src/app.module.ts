@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
 import { GamesModule } from './games/games.module';
+import { ParticipantsService } from './participants/participants.service';
+import { ParticipantsController } from './participants/participants.controller';
 
 @Module({
   imports: [
@@ -38,5 +40,7 @@ import { GamesModule } from './games/games.module';
     AuthModule,
     GamesModule,
   ],
+  providers: [ParticipantsService],
+  controllers: [ParticipantsController],
 })
 export class AppModule {}

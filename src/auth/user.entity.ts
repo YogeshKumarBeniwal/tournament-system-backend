@@ -1,5 +1,5 @@
 import { Tournament } from '../tournaments/tournament.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -12,6 +12,21 @@ export class User {
   @Column()
   password: string;
 
-  // @OneToMany((_type) => Tournament, (tournament) => tournament.game, { eager: true })
-  // tournaments: Tournament[];
+  @ManyToMany(
+    (_type) => Tournament, 
+    (tournament) => tournament.users, 
+    { eager: true }
+  )
+  @JoinTable({
+    name: 'participant',
+    joinColumn: {
+      name: 'userId',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'tournamentId',
+      referencedColumnName: 'id',
+    },
+  })
+  tournaments: Tournament[];
 }
