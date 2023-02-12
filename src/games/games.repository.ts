@@ -6,7 +6,7 @@ import { GetGameFilterDto } from "./get-game-filter.dto";
 
 @Injectable()
 export class GameRepository extends Repository<Game>{
-    private logger = new Logger('GamesRepositry', { timestamp: true });
+    private logger = new Logger(GameRepository.name, { timestamp: true });
 
     constructor(private dataSource: DataSource) {
         super(Game, dataSource.createEntityManager());
@@ -16,10 +16,6 @@ export class GameRepository extends Repository<Game>{
         const { search } = filterDto;
 
         const query = this.createQueryBuilder('game');
-
-        // if (genre) {
-        //     query.andWhere('game.genre = :genre', { genre: genre });
-        // }
 
         if (search) {
             query.andWhere(
@@ -46,12 +42,10 @@ export class GameRepository extends Repository<Game>{
         const game = this.create({
             title,
             description,
-            // genre,
             icon,
             thumbnail
         });
 
-        this.save(game);
-        return game;
+        return this.save(game);
     }
 }

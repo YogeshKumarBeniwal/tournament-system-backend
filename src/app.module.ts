@@ -5,8 +5,6 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
 import { GamesModule } from './games/games.module';
-import { ParticipantsService } from './participants/participants.service';
-import { ParticipantsController } from './participants/participants.controller';
 
 @Module({
   imports: [
@@ -26,21 +24,20 @@ import { ParticipantsController } from './participants/participants.controller';
             ssl: isProduction ? { rejectUnauthorized: false } : null,
           },
           type: 'postgres',
-          autoLoadEntities: true,
-          synchronize: true,
           host: configService.get('DB_HOST'),
           port: configService.get('DB_PORT'),
           username: configService.get('DB_USERNAME'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_DATABASE'),
+          autoLoadEntities: true,
+          cache: true,
+          synchronize: true,
         };
       },
     }),
     TournamentsModule,
     AuthModule,
     GamesModule,
-  ],
-  providers: [ParticipantsService],
-  controllers: [ParticipantsController],
+  ]
 })
 export class AppModule {}

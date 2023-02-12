@@ -8,7 +8,7 @@ import { Game } from 'src/games/game.entity';
 
 @Injectable()
 export class TournamentsRepository extends Repository<Tournament> {
-  private logger = new Logger('TournamentsRepository', { timestamp: true });
+  private logger = new Logger(TournamentsRepository.name, { timestamp: true });
 
   constructor(private dataSource: DataSource) {
     super(Tournament, dataSource.createEntityManager());
@@ -35,8 +35,7 @@ export class TournamentsRepository extends Repository<Tournament> {
     }
 
     try {
-      const tournaments = await query.getMany();
-      return tournaments;
+      return await query.getMany();
     } catch (error) {
       this.logger.error(
         `Failed to get tournament. Filters: ${JSON.stringify(filterDto)}`,
@@ -46,8 +45,8 @@ export class TournamentsRepository extends Repository<Tournament> {
     }
   }
 
-  async createTournament(createTaskDto: CreateTournamentDto, game: Game): Promise<Tournament> {
-    const { title, description, icon, thumbnail } = createTaskDto;
+  async createTournament(createTournamentDto: CreateTournamentDto, game: Game): Promise<Tournament> {
+    const { title, description, icon, thumbnail } = createTournamentDto;
 
     const tournament = this.create({
       title,
@@ -58,7 +57,6 @@ export class TournamentsRepository extends Repository<Tournament> {
       status: TournamentStatus.OPEN,
     });
 
-    await this.save(tournament);
-    return tournament;
+    return this.save(tournament);
   }
 }

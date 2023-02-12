@@ -1,5 +1,6 @@
 import { Tournament } from '../tournaments/tournament.entity';
 import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -10,12 +11,13 @@ export class User {
   username: string;
 
   @Column()
+  @Exclude()
   password: string;
 
   @ManyToMany(
-    (_type) => Tournament, 
-    (tournament) => tournament.users, 
-    { eager: true }
+    (_type) => Tournament,
+    (tournament) => tournament.users,
+    { eager: false }
   )
   @JoinTable({
     name: 'participant',
@@ -28,5 +30,5 @@ export class User {
       referencedColumnName: 'id',
     },
   })
-  tournaments: Tournament[];
+  tournaments?: Tournament[];
 }

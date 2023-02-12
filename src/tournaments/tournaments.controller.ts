@@ -20,9 +20,9 @@ import { TournamentsService } from './tournaments.service';
 import { Logger } from '@nestjs/common';
 
 @Controller('tournaments')
-@UseGuards(AuthGuard())
+// @UseGuards(AuthGuard())
 export class TournamentsController {
-  private logger = new Logger('TournamentsController');
+  private logger = new Logger(TournamentsController.name);
 
   constructor(private tournamentsService: TournamentsService) { }
 
@@ -56,15 +56,14 @@ export class TournamentsController {
   }
 
   @Delete('/:id')
-  deleteTournament(@Param('id') id: string, @GetUser() user: User): Promise<void> {
-    return this.tournamentsService.deleteTournament(id, user);
+  deleteTournament(@Param('id') id: string): Promise<void> {
+    return this.tournamentsService.deleteTournament(id);
   }
 
   @Patch('/:id/status')
   updateTournamentStatus(
     @Param('id') id: string,
     @Body() updateTaskStatusDto: UpdateTournamentStatusDto,
-    @GetUser() user: User,
   ): Promise<Tournament> {
     this.logger.verbose(
       `Updating a new tournament. Data: ${JSON.stringify(
@@ -73,6 +72,6 @@ export class TournamentsController {
     );
 
     const { status } = updateTaskStatusDto;
-    return this.tournamentsService.updateTournamentStatus(id, status, user);
+    return this.tournamentsService.updateTournamentStatus(id, status);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { TournamentStatus } from './tournament-status.enum';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { GetTournamentsFilterDto } from './dto/get-tournaments-filter.dto';
@@ -6,12 +6,19 @@ import { TournamentsRepository as TournamentsRepository } from './tournaments.re
 import { Tournament } from './tournament.entity';
 import { User } from '../auth/user.entity';
 import { GamesService } from 'src/games/games.service';
+import { JoinTournamentDto } from './dto/join-tournament.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { ParticipantsRepository } from './participants/participants.repository';
+import { AddParticipantScoreDto } from './dto/add-score.dto';
+import { Participant } from './participants/participant.entity';
 
 @Injectable()
 export class TournamentsService {
   constructor(
     private tournamentsRepository: TournamentsRepository,
-    private gamesService: GamesService
+    private gamesService: GamesService,
+    private authService: AuthService,
+    private participantsRepository: ParticipantsRepository
   ) { }
 
   getTournaments(filterDto: GetTournamentsFilterDto): Promise<Tournament[]> {
@@ -19,11 +26,7 @@ export class TournamentsService {
   }
 
   async getTournamentById(id: string): Promise<Tournament> {
-    const found = await this.tournamentsRepository.findOne({ 
-      where: { 
-        id
-      } 
-    });
+    const found = await this.tournamentsRepository.findOneBy({ id });
 
     if (!found) {
       throw new NotFoundException(`Tournament with ID "${id}" not found`);
@@ -37,8 +40,8 @@ export class TournamentsService {
     return this.tournamentsRepository.createTournament(createTournamentDto, game);
   }
 
-  async deleteTournament(id: string, user: User): Promise<void> {
-    const result = await this.tournamentsRepository.delete({ id, game: user });
+  async deleteTournament(id: string): Promise<void> {
+    const result = await this.tournamentsRepository.delete({ id });
 
     if (result.affected === 0) {
       throw new NotFoundException(`Tournaments with ID "${id}" not found`);
@@ -47,13 +50,84 @@ export class TournamentsService {
 
   async updateTournamentStatus(
     id: string,
-    status: TournamentStatus,
-    user: User,
+    status: TournamentStatus
   ): Promise<Tournament> {
     const tournament = await this.getTournamentById(id);
 
-    tournament.status = status;
-    await this.tournamentsRepository.save(tournament);
+    if(status && tournament.status != TournamentStatus.DONE)
+      tournament.status = status;
+
+    return this.tournamentsRepository.save(tournament);;
+  }
+
+  async addParticipant(joinTournamentDto: JoinTournamentDto) : Promise<Tournament>{
+    const { tournamentId, username } = joinTournamentDto;
+    
+    const tournament = await this.getTournamentById(tournamentId);
+
+    try {
+      if(tournament.status !== TournamentStatus.OPEN){
+        throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
+      }
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+
+    const user = await this.authService.getUser(username);
+
+    await this.participantsRepository.createParticipant({
+      user,
+      tournament
+    });
+
+    const UpdatedTournament = await this.getTournamentById(tournamentId);
+
+    if(UpdatedTournament.users.length >= tournament.maxParticipant){
+        return this.updateTournamentStatus(tournamentId, TournamentStatus.IN_PROGRESS);
+    }
+
+    return UpdatedTournament;
+  }
+
+  async removeParticipant(joinTournamentDto: JoinTournamentDto) : Promise<void>{
+    const { tournamentId, userId } = joinTournamentDto;
+    
+    const tournament = await this.getTournamentById(tournamentId);
+
+    try {
+      if(tournament.status !== TournamentStatus.OPEN){
+        throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
+      }
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+    
+    await this.participantsRepository.removeParticipant({
+      userId,
+      tournamentId
+    });
+  }
+  
+  async addParticipantScore(addParticipantScoreDto: AddParticipantScoreDto) : Promise<Tournament>{
+    const { tournamentId } = addParticipantScoreDto;
+    const tournament = await this.getTournamentById(tournamentId);
+    
+    try {
+      if(tournament.status !== TournamentStatus.IN_PROGRESS){
+        throw new HttpException('Tournament is not started or already closed!', HttpStatus.FORBIDDEN);
+      }
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+
+    const participent = await this.participantsRepository.addParticipantScore(addParticipantScoreDto);
+
+    if(participent.score >= tournament.scoreToWin){
+      return this.updateTournamentStatus(tournamentId, TournamentStatus.DONE);
+    }
 
     return tournament;
   }

@@ -1,5 +1,4 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-// import { GameGenre } from '../game-genre.enum';
 
 export class CreateGameDto {
   @IsNotEmpty()
@@ -7,10 +6,6 @@ export class CreateGameDto {
 
   @IsNotEmpty()
   description: string;
-
-  // @IsNotEmpty()
-  // @IsEnum(GameGenre)
-  // genre: GameGenre;
 
   @IsNotEmpty()
   icon: string;
