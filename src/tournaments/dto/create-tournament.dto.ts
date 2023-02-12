@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
 
 export class CreateTournamentDto {
   @IsNotEmpty()
@@ -13,11 +13,15 @@ export class CreateTournamentDto {
   @IsNotEmpty()
   thumbnail: string;
 
+  @IsNotEmpty()
+  @IsInt()
   @IsNumber()
   @Min(2)
   @Max(7)
   maxParticipant: number
 
+  @IsNotEmpty()
+  @IsInt()
   @IsNumber()
   @Min(1)
   @Max(100)

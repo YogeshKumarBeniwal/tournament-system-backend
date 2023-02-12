@@ -3,11 +3,13 @@ import { User } from 'src/auth/user.entity';
 import { Tournament } from 'src/tournaments/tournament.entity';
 
 export class CreateParticipantDto {
-  @IsNotEmptyObject()
-  user: User;
+  @IsNotEmpty()
+  @IsUUID()
+  userId: string;
 
-  @IsNotEmptyObject()
-  tournament: Tournament;
+  @IsNotEmpty()
+  @IsUUID()
+  tournamentId: string;
 }
 
 export class RemoveParticipantDto {

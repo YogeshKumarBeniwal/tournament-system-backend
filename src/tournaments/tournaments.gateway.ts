@@ -103,6 +103,10 @@ export class TournamentsGateway implements OnGatewayConnection, OnGatewayDisconn
     this.io.to(tournamentId).emit('score_updated', {username, score: addScoreDto.score});
     
     if(updatedTournament.status == TournamentStatus.DONE){
+      this.logger.debug(
+        `Tournament ended and the winner is ${username}`,
+      );
+
       this.io.to(tournamentId).emit('tournament_end', {
         tournamentId, 
         username

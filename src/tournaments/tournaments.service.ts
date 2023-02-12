@@ -4,20 +4,16 @@ import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { GetTournamentsFilterDto } from './dto/get-tournaments-filter.dto';
 import { TournamentsRepository as TournamentsRepository } from './tournaments.repository';
 import { Tournament } from './tournament.entity';
-import { User } from '../auth/user.entity';
 import { GamesService } from 'src/games/games.service';
 import { JoinTournamentDto } from './dto/join-tournament.dto';
-import { AuthService } from 'src/auth/auth.service';
 import { ParticipantsRepository } from './participants/participants.repository';
 import { AddParticipantScoreDto } from './dto/add-score.dto';
-import { Participant } from './participants/participant.entity';
 
 @Injectable()
 export class TournamentsService {
   constructor(
     private tournamentsRepository: TournamentsRepository,
     private gamesService: GamesService,
-    private authService: AuthService,
     private participantsRepository: ParticipantsRepository
   ) { }
 
@@ -61,7 +57,7 @@ export class TournamentsService {
   }
 
   async addParticipant(joinTournamentDto: JoinTournamentDto) : Promise<Tournament>{
-    const { tournamentId, username } = joinTournamentDto;
+    const { tournamentId, userId } = joinTournamentDto;
     
     const tournament = await this.getTournamentById(tournamentId);
 
@@ -74,11 +70,9 @@ export class TournamentsService {
       return error;
     }
 
-    const user = await this.authService.getUser(username);
-
     await this.participantsRepository.createParticipant({
-      user,
-      tournament
+      userId,
+      tournamentId
     });
 
     const UpdatedTournament = await this.getTournamentById(tournamentId);
@@ -103,7 +97,7 @@ export class TournamentsService {
       console.error(error);
       return error;
     }
-    
+
     await this.participantsRepository.removeParticipant({
       userId,
       tournamentId

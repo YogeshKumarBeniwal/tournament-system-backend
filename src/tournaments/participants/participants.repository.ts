@@ -13,19 +13,12 @@ export class ParticipantsRepository extends Repository<Participant> {
   }
 
   async createParticipant(createTournamentDto: CreateParticipantDto): Promise<Participant> {
-    const { user, tournament } = createTournamentDto;
+    const { userId, tournamentId } = createTournamentDto;
 
     const participant = this.create({
-      user,
-      tournament,
-      score: 0
+      userId,
+      tournamentId
     });
-
-    var existingEntry = await this.findOne({where: participant});
-
-    if(existingEntry){
-      return existingEntry;
-    }
 
     return this.save(participant);
   }

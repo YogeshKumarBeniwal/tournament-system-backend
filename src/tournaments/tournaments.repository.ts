@@ -46,7 +46,7 @@ export class TournamentsRepository extends Repository<Tournament> {
   }
 
   async createTournament(createTournamentDto: CreateTournamentDto, game: Game): Promise<Tournament> {
-    const { title, description, icon, thumbnail } = createTournamentDto;
+    const { title, description, icon, thumbnail, maxParticipant, scoreToWin } = createTournamentDto;
 
     const tournament = this.create({
       title,
@@ -54,6 +54,8 @@ export class TournamentsRepository extends Repository<Tournament> {
       icon,
       thumbnail,
       game,
+      maxParticipant,
+      scoreToWin,
       status: TournamentStatus.OPEN,
     });
 
