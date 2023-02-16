@@ -17,26 +17,25 @@ export class SocketIOAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: ServerOptions) {
-    // const clientPort = parseInt(this.configService.get('CLIENT_PORT'));
+    const clientPort = parseInt(this.configService.get('CLIENT_PORT'));
 
-    // const cors = {
-    //   origin: [
-    //     `http://localhost:${clientPort}`,
-    //     new RegExp(`/^http:\/\/192\.168\.1\.([1-9]|[1-9]\d):${clientPort}$/`),
-    //   ],
-    // };
+    const cors = {
+      origin: [
+        `http://localhost:${clientPort}`,
+        new RegExp(`/^http:\/\/192\.168\.1\.([1-9]|[1-9]\d):${clientPort}$/`),
+      ],
+    };
 
-    // this.logger.log('Configuring SocketIO server with custom CORS options', {
-    //   cors,
-    // });
+    this.logger.log('Configuring SocketIO server with custom CORS options', {
+      cors,
+    });
 
-    // const optionsWithCORS: ServerOptions = {
-    //   ...options,
-    //   cors,
-    // };
+    const optionsWithCORS: ServerOptions = {
+      ...options,
+      cors,
+    };
 
-    // const jwtService = this.app.get(JwtService);
-    const server: Server = super.createIOServer(port);
+    const server: Server = super.createIOServer(port, optionsWithCORS);
 
     server.of('tournaments').use(createTokenMiddleware(this.jwtService, this.logger));
 
@@ -62,6 +61,7 @@ const createTokenMiddleware =
       socket.tournamentId = tournamentId;
       next();
     } catch {
+      logger.debug(`User unauthorized!`);
       next(new Error('FORBIDDEN'));
     }
   };
