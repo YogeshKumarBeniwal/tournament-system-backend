@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNotEmptyObject, IsNumber, IsUUID } from "class-validator";
+import { IsIn, IsNotEmpty, IsNumber, IsUUID } from "class-validator";
 
 export class AddScoreDto{
     @IsNotEmpty()

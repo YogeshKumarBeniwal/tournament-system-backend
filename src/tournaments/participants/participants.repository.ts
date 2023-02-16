@@ -32,7 +32,7 @@ export class ParticipantsRepository extends Repository<Participant> {
     });
 
     if (result.affected === 0) {
-      throw new NotFoundException(`Participant with username ${userId} not part of tpurnament ${tournamentId}`);
+      throw new NotFoundException(`Participant with userID ${userId} not part of tournament ${tournamentId}`);
     }
   }
 
@@ -49,5 +49,17 @@ export class ParticipantsRepository extends Repository<Participant> {
     participant.score += score;
 
     return this.save(participant);;
+  }
+
+  async getLeaderboardByTournamentId(tournamentId: string): Promise<Participant[]> {
+    const participants = await this.createQueryBuilder("participant")
+      .leftJoinAndSelect("participant.tournament", "tournament")
+      .leftJoinAndSelect("participant.user", "user")
+      .where("participant.tournamentId = :tournamentId", { tournamentId })
+      .orderBy("participant.score", "DESC")
+      .cache(10) // set the TTL to 10 seconds
+      .getMany();
+
+    return participants;
   }
 }
