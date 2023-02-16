@@ -18,6 +18,7 @@ import { UpdateTournamentStatusDto } from './dto/update-tournament-status.dto';
 import { Tournament } from './tournament.entity';
 import { TournamentsService } from './tournaments.service';
 import { Logger } from '@nestjs/common';
+import { Participant } from './participants/participant.entity';
 
 @Controller('tournaments')
 // @UseGuards(AuthGuard())
@@ -39,8 +40,19 @@ export class TournamentsController {
   }
 
   @Get('/:id')
-  getTaskById(@Param('id') id: string): Promise<Tournament> {
+  getTournamentById(@Param('id') id: string): Promise<Tournament> {
+    this.logger.verbose(
+      `Retrieving tournament. id: ${id}`,
+    );
     return this.tournamentsService.getTournamentById(id);
+  }
+
+  @Get('/leaderboards/:id')
+  getLeaderboardByTournamentId(@Param('id') id: string): Promise<Participant[]> {
+    this.logger.verbose(
+      `Retrieving Leaderboard. id: ${id}`,
+    );
+    return this.tournamentsService.getLeaderboardByTournamentId(id);
   }
 
   @Post()

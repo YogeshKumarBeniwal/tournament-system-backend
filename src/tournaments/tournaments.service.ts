@@ -8,6 +8,7 @@ import { GamesService } from 'src/games/games.service';
 import { JoinTournamentDto } from './dto/join-tournament.dto';
 import { ParticipantsRepository } from './participants/participants.repository';
 import { AddParticipantScoreDto } from './dto/add-score.dto';
+import { Participant } from './participants/participant.entity';
 
 @Injectable()
 export class TournamentsService {
@@ -31,6 +32,16 @@ export class TournamentsService {
     return found;
   }
 
+  async getLeaderboardByTournamentId(id: string): Promise<Participant[]> {
+    const found = await this.getTournamentById( id );
+
+    if (!found) {
+      throw new NotFoundException(`Tournament with ID "${id}" not found`);
+    }
+
+    return this.participantsRepository.getLeaderboardByTournamentId(id);
+  }
+
   async createTournament(createTournamentDto: CreateTournamentDto): Promise<Tournament> {
     const game = await this.gamesService.getGameById(createTournamentDto.gameId);
     return this.tournamentsRepository.createTournament(createTournamentDto, game);
@@ -50,24 +61,19 @@ export class TournamentsService {
   ): Promise<Tournament> {
     const tournament = await this.getTournamentById(id);
 
-    if(status && tournament.status != TournamentStatus.DONE)
+    if (status && tournament.status != TournamentStatus.DONE)
       tournament.status = status;
 
     return this.tournamentsRepository.save(tournament);;
   }
 
-  async addParticipant(joinTournamentDto: JoinTournamentDto) : Promise<Tournament>{
+  async addParticipant(joinTournamentDto: JoinTournamentDto): Promise<Tournament> {
     const { tournamentId, userId } = joinTournamentDto;
-    
+
     const tournament = await this.getTournamentById(tournamentId);
 
-    try {
-      if(tournament.status !== TournamentStatus.OPEN){
-        throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
-      }
-    } catch (error) {
-      console.error(error);
-      return error;
+    if (tournament.status !== TournamentStatus.OPEN) {
+      throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
     }
 
     await this.participantsRepository.createParticipant({
@@ -77,49 +83,46 @@ export class TournamentsService {
 
     const UpdatedTournament = await this.getTournamentById(tournamentId);
 
-    if(UpdatedTournament.users.length >= tournament.maxParticipant){
-        return this.updateTournamentStatus(tournamentId, TournamentStatus.IN_PROGRESS);
+    if (UpdatedTournament.users.length >= tournament.maxParticipant) {
+      return this.updateTournamentStatus(tournamentId, TournamentStatus.IN_PROGRESS);
     }
 
     return UpdatedTournament;
   }
 
-  async removeParticipant(joinTournamentDto: JoinTournamentDto) : Promise<void>{
+  async removeParticipant(joinTournamentDto: JoinTournamentDto): Promise<Tournament> {
     const { tournamentId, userId } = joinTournamentDto;
-    
+
     const tournament = await this.getTournamentById(tournamentId);
 
+    if (tournament.status !== TournamentStatus.OPEN) {
+      throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
+    }
+
     try {
-      if(tournament.status !== TournamentStatus.OPEN){
-        throw new HttpException('Tournament is closed or in progress!', HttpStatus.FORBIDDEN);
-      }
+      await this.participantsRepository.removeParticipant({
+        userId,
+        tournamentId
+      });
     } catch (error) {
       console.error(error);
       return error;
     }
 
-    await this.participantsRepository.removeParticipant({
-      userId,
-      tournamentId
-    });
+    return this.getTournamentById(tournamentId);
   }
-  
-  async addParticipantScore(addParticipantScoreDto: AddParticipantScoreDto) : Promise<Tournament>{
+
+  async addParticipantScore(addParticipantScoreDto: AddParticipantScoreDto): Promise<Tournament> {
     const { tournamentId } = addParticipantScoreDto;
     const tournament = await this.getTournamentById(tournamentId);
-    
-    try {
-      if(tournament.status !== TournamentStatus.IN_PROGRESS){
-        throw new HttpException('Tournament is not started or already closed!', HttpStatus.FORBIDDEN);
-      }
-    } catch (error) {
-      console.error(error);
-      return error;
+
+    if (tournament.status !== TournamentStatus.IN_PROGRESS) {
+      throw new HttpException('Tournament is not started or already closed!', HttpStatus.FORBIDDEN);
     }
 
     const participent = await this.participantsRepository.addParticipantScore(addParticipantScoreDto);
 
-    if(participent.score >= tournament.scoreToWin){
+    if (participent.score >= tournament.scoreToWin) {
       return this.updateTournamentStatus(tournamentId, TournamentStatus.DONE);
     }
 
